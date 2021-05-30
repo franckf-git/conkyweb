@@ -15,10 +15,9 @@ var commands map[string]string = map[string]string{
 	"user":     "whoami",
 	"ips":      "ip a",
 	"hostname": "hostname",
-	"packages": "dnf list --installed | wc -l", // TODO prévoir pour debian distro
+	"packages": "dnf list --installed | wc -l",
 	"kernel":   "uname -a",
 	// "os":       "lsb_release -a",
-	// TODO ignorer les commandes inconnues - mais mettre une alerte
 	"top":    "ps aux | sort -nk +4 | tail",
 	"memory": "free -h",
 	"loads":  "uptime | cut -d' ' -f10-",
@@ -29,7 +28,6 @@ var commands map[string]string = map[string]string{
 func main() {
 	http.HandleFunc("/", serveTemplate)
 	log.Println("Le serveur est en ligne, visitez http://127.0.0.1:5500")
-	// TODO ouverture auto du navigateur par défaut ? `xdg-open http://127.0.0.1:5500`
 	http.ListenAndServe(":5500", nil)
 }
 
@@ -42,7 +40,6 @@ func serveTemplate(res http.ResponseWriter, req *http.Request) {
 	}
 
 	indextemplate, err := template.ParseFiles("indextemplate.html")
-	// TODO include html file to only have one file
 	if err != nil {
 		panic(err)
 	}
