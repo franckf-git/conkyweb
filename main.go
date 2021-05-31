@@ -28,6 +28,7 @@ var commands map[string]string = map[string]string{
 func main() {
 	http.HandleFunc("/", serveTemplate)
 	log.Println("Le serveur est en ligne, visitez http://127.0.0.1:5500")
+	exec.Command("bash", "-c", "xdg-open http://127.0.0.1:5500").Start()
 	http.ListenAndServe(":5500", nil)
 }
 
