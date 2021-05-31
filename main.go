@@ -9,6 +9,8 @@ import (
 )
 
 const title string = "ConkyWeb"
+const port string = ":5500"
+const opendefaultbrowser = "xdg-open http://127.0.0.1" + port
 
 var commands map[string]string = map[string]string{
 	"uptime":   "uptime",
@@ -27,9 +29,9 @@ var commands map[string]string = map[string]string{
 
 func main() {
 	http.HandleFunc("/", serveTemplate)
-	log.Println("Le serveur est en ligne, visitez http://127.0.0.1:5500")
-	exec.Command("bash", "-c", "xdg-open http://127.0.0.1:5500").Start()
-	http.ListenAndServe(":5500", nil)
+	log.Print("Le serveur est en ligne, visitez http://127.0.0.1", port)
+	exec.Command("bash", "-c", opendefaultbrowser).Start()
+	http.ListenAndServe(port, nil)
 }
 
 func serveTemplate(res http.ResponseWriter, req *http.Request) {
