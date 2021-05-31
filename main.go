@@ -1,11 +1,11 @@
 package main
 
 import (
-	"html/template"
 	"log"
 	"net/http"
 	"os/exec"
 	"regexp"
+	"text/template"
 )
 
 const title string = "ConkyWeb"
@@ -64,7 +64,6 @@ func runCommand(command string) string {
 	}
 	regexp, _ := regexp.Compile(`\n`)
 	formatoutput := regexp.ReplaceAllString(string(output), "<br>")
-
-	result := string(formatoutput)
+	result := formatoutput
 	return result
 }
