@@ -1,14 +1,22 @@
+image: golang:1.15.7
+
 stages:
+#   - test
   - build
+
+before_script:
+  - cd $GOPATH/src
+  - mkdir -p gitlab.com/$CI_PROJECT_NAMESPACE
+  - cd gitlab.com/$CI_PROJECT_NAMESPACE
+  - ln -s $CI_PROJECT_DIR
+  - cd $CI_PROJECT_NAME
+
+# unit_tests:
+#  stage: test
+#  script:
+#    - go test -v ./... -coverprofile .testCoverage.txt
 
 build:
   stage: build
-  image: golang:1.15.7
-  before_script:
-    - cd $GOPATH/src
-    - mkdir -p gitlab.com/$CI_PROJECT_NAMESPACE
-    - cd gitlab.com/$CI_PROJECT_NAMESPACE
-    - ln -s $CI_PROJECT_DIR
-    - cd $CI_PROJECT_NAME
   script:
     - go build -o conkyweb
