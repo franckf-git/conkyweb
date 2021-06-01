@@ -1,21 +1,16 @@
 image: golang:latest
 
-variables:
-  REPO_NAME: gitlab.com/franckf/conkyweb
-
-before_script:
-  - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
-  - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
-  - cd $GOPATH/src/$REPO_NAME
-
 stages:
   - build
 
-compile:
+build:
   stage: build
+  before_script:
+    - cd $GOPATH/src
+    - mkdir -p gitlab.com/$CI_PROJECT_NAMESPACE
+    - cd gitlab.com/$CI_PROJECT_NAMESPACE
+    - ln -s $CI_PROJECT_DIR
+    - cd $CI_PROJECT_NAME
   script:
-    - go build -race -ldflags "-extldflags '-static'" -o $CI_PROJECT_DIR/conkyweb
-  artifacts:
-    paths:
-      - conkyweb
+    - go build -o conkyweb
 
