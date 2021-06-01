@@ -12,4 +12,3 @@ build:
     - cd $CI_PROJECT_NAME
   script:
     - go build -o conkyweb
-
