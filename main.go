@@ -37,11 +37,19 @@ func main() {
 func serveTemplate(res http.ResponseWriter, req *http.Request) {
 	log.Println(req.URL, req.UserAgent())
 
-	var commandsExec = make(map[string]string) // obliger de faire un make sinon le map reste nil
-	for title, command := range commands {
-		commandsExec[title] = runCommand(command)
+	// lance toutes les commandes dans des go routines
+	var channelCommand = make(chan string)
+	for _, command := range commands {
+		go runCommand(command, channelCommand)
 	}
 
+	// recupération des résultats
+	var commandsExec = make(map[string]string) // obliger de faire un make sinon le map reste nil
+	for title := range commands {
+		runnercommand := <-channelCommand
+		commandsExec[title] = runnercommand
+	}
+	//! PB async marche mais on perd l'association [title]command
 	indextemplate, err := template.New("").Parse(htmltemplate)
 	if err != nil {
 		panic(err)
@@ -57,7 +65,7 @@ func serveTemplate(res http.ResponseWriter, req *http.Request) {
 	indextemplate.Execute(res, data)
 }
 
-func runCommand(command string) string {
+func runCommand(command string, channelCommand chan string) {
 	output, errcmd := exec.Command("bash", "-c", command).CombinedOutput()
 	if errcmd != nil {
 		log.Fatal("La commande ", command, " n'existe pas")
@@ -65,7 +73,7 @@ func runCommand(command string) string {
 	regexp, _ := regexp.Compile(`\n`)
 	formatoutput := regexp.ReplaceAllString(string(output), "<br>")
 	result := formatoutput
-	return result
+	channelCommand <- result
 }
 
 const htmltemplate = `
