@@ -19,12 +19,12 @@ var commands map[string]string = map[string]string{
 	"hostname": "hostname",
 	"packages": "dnf list --installed | wc -l",
 	"kernel":   "uname -a",
-	// "os":       "lsb_release -a",
-	"top":    "ps aux | sort -nk +4 | tail",
-	"memory": "free -h",
-	"loads":  "uptime | cut -d' ' -f10-",
-	"cpu":    "lscpu | grep 'Model name' | cut -d' ' -f12-",
-	"disks":  "df -h",
+	"os":       "lsb_release -a",
+	"top":      "ps aux | sort -nk +4 | tail",
+	"memory":   "free -h",
+	"loads":    "uptime | cut -d' ' -f10-",
+	"cpu":      "lscpu | grep 'Model name' | cut -d' ' -f12-",
+	"disks":    "df -h",
 }
 
 func main() {
@@ -68,12 +68,15 @@ func serveTemplate(res http.ResponseWriter, req *http.Request) {
 func runCommand(command string, channelCommand chan string) {
 	output, errcmd := exec.Command("bash", "-c", command).CombinedOutput()
 	if errcmd != nil {
-		log.Fatal("La commande ", command, " n'existe pas")
+		resultatvide := "La commande " + command + " n'existe pas"
+		log.Print(resultatvide)
+		channelCommand <- resultatvide
+	} else {
+		regexp, _ := regexp.Compile(`\n`)
+		formatoutput := regexp.ReplaceAllString(string(output), "<br>")
+		result := formatoutput
+		channelCommand <- result
 	}
-	regexp, _ := regexp.Compile(`\n`)
-	formatoutput := regexp.ReplaceAllString(string(output), "<br>")
-	result := formatoutput
-	channelCommand <- result
 }
 
 const htmltemplate = `
