@@ -12,7 +12,12 @@ const title string = "ConkyWeb"
 const port string = ":5500"
 const opendefaultbrowser = "xdg-open http://127.0.0.1" + port
 
-var commands map[string]string = map[string]string{
+type commandStruct struct {
+	titlecmd string
+	command  string
+}
+
+var commandsList map[string]string = map[string]string{
 	"uptime":   "uptime",
 	"user":     "whoami",
 	"ips":      "ip a",
@@ -38,18 +43,19 @@ func serveTemplate(res http.ResponseWriter, req *http.Request) {
 	log.Println(req.URL, req.UserAgent())
 
 	// lance toutes les commandes dans des go routines
-	var channelCommand = make(chan string)
-	for _, command := range commands {
-		go runCommand(command, channelCommand)
+	var channelCommand = make(chan commandStruct)
+	for titlecmd, command := range commandsList {
+		execCommand := commandStruct{titlecmd, command}
+		go runCommand(execCommand, channelCommand)
 	}
 
 	// recupération des résultats
 	var commandsExec = make(map[string]string) // obliger de faire un make sinon le map reste nil
-	for title := range commands {
+	for i := 0; i < len(commandsList); i++ {
 		runnercommand := <-channelCommand
-		commandsExec[title] = runnercommand
+		commandsExec[runnercommand.titlecmd] = runnercommand.command
 	}
-	//! PB async marche mais on perd l'association [title]command
+
 	indextemplate, err := template.New("").Parse(htmltemplate)
 	if err != nil {
 		panic(err)
@@ -65,17 +71,17 @@ func serveTemplate(res http.ResponseWriter, req *http.Request) {
 	indextemplate.Execute(res, data)
 }
 
-func runCommand(command string, channelCommand chan string) {
-	output, errcmd := exec.Command("bash", "-c", command).CombinedOutput()
+func runCommand(commands commandStruct, channelCommand chan commandStruct) {
+	output, errcmd := exec.Command("bash", "-c", commands.command).CombinedOutput()
 	if errcmd != nil {
-		resultatvide := "La commande " + command + " n'existe pas"
+		resultatvide := commandStruct{commands.titlecmd, "La commande " + commands.command + " n'existe pas"}
 		log.Print(resultatvide)
 		channelCommand <- resultatvide
 	} else {
 		regexp, _ := regexp.Compile(`\n`)
 		formatoutput := regexp.ReplaceAllString(string(output), "<br>")
-		result := formatoutput
-		channelCommand <- result
+		commands.command = formatoutput
+		channelCommand <- commands
 	}
 }
 
