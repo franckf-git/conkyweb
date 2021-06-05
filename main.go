@@ -22,7 +22,7 @@ var commandsList map[string]string = map[string]string{
 	"user":     "whoami",
 	"ips":      "ip a",
 	"hostname": "hostname",
-	"packages": "dnf list --installed | wc -l",
+	"packages": "if [ -e /usr/bin/dnf ] ; then dnf list --installed | wc -l ; else apt list --installed | wc -l ; fi",
 	"kernel":   "uname -a",
 	"os":       "lsb_release -a",
 	"top":      "ps aux | sort -nk +4 | tail",
