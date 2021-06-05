@@ -79,8 +79,13 @@ func runCommand(commands commandStruct, channelCommand chan commandStruct) {
 		channelCommand <- resultatvide
 	} else {
 		regexp, _ := regexp.Compile(`\n`)
-		formatoutput := regexp.ReplaceAllString(string(output), "<br>")
-		commands.command = formatoutput
+		if commands.titlecmd == "user" {
+			formatoutput := regexp.ReplaceAllString(string(output), "")
+			commands.command = formatoutput
+		} else {
+			formatoutput := regexp.ReplaceAllString(string(output), "<br>")
+			commands.command = formatoutput
+		}
 		channelCommand <- commands
 	}
 }
