@@ -10,11 +10,11 @@ import (
 
 const title string = "ConkyWeb"
 const port string = ":5500"
-const opendefaultbrowser = "xdg-open http://127.0.0.1" + port
+const openDefaultBrowser = "xdg-open http://127.0.0.1" + port
 
-type commandStruct struct {
-	titlecmd string
-	command  string
+type pairCommand struct {
+	designation string
+	execution   string
 }
 
 var commandsList map[string]string = map[string]string{
@@ -35,28 +35,28 @@ var commandsList map[string]string = map[string]string{
 func main() {
 	http.HandleFunc("/", serveTemplate)
 	log.Print("Le serveur est en ligne, visitez http://127.0.0.1", port)
-	exec.Command("bash", "-c", opendefaultbrowser).Start()
+	exec.Command("bash", "-c", openDefaultBrowser).Start()
 	http.ListenAndServe(port, nil)
 }
 
-func serveTemplate(res http.ResponseWriter, req *http.Request) {
-	log.Println(req.URL, req.UserAgent())
+func serveTemplate(response http.ResponseWriter, request *http.Request) {
+	log.Println(request.URL, request.UserAgent())
 
 	// lance toutes les commandes dans des go routines
-	var channelCommand = make(chan commandStruct)
-	for titlecmd, command := range commandsList {
-		execCommand := commandStruct{titlecmd, command}
-		go runCommand(execCommand, channelCommand)
+	var returnExecutedCommand = make(chan pairCommand)
+	for designation, execution := range commandsList {
+		command := pairCommand{designation, execution}
+		go runCommand(command, returnExecutedCommand)
 	}
 
 	// recupération des résultats
-	var commandsExec = make(map[string]string) // obliger de faire un make sinon le map reste nil
+	var commandsProcessed = make(map[string]string) // obliger de faire un make sinon le map reste nil
 	for i := 0; i < len(commandsList); i++ {
-		runnercommand := <-channelCommand
-		commandsExec[runnercommand.titlecmd] = runnercommand.command
+		getExecutedCommand := <-returnExecutedCommand
+		commandsProcessed[getExecutedCommand.designation] = getExecutedCommand.execution
 	}
 
-	indextemplate, err := template.New("").Parse(htmltemplate)
+	indexTemplate, err := template.New("").Parse(htmlTemplate)
 	if err != nil {
 		panic(err)
 	}
@@ -66,31 +66,31 @@ func serveTemplate(res http.ResponseWriter, req *http.Request) {
 		Commands map[string]string
 	}{
 		Title:    title,
-		Commands: commandsExec,
+		Commands: commandsProcessed,
 	}
-	indextemplate.Execute(res, data)
+	indexTemplate.Execute(response, data)
 }
 
-func runCommand(commands commandStruct, channelCommand chan commandStruct) {
-	output, errcmd := exec.Command("bash", "-c", commands.command).CombinedOutput()
+func runCommand(commands pairCommand, returnExecutedCommand chan pairCommand) {
+	output, errcmd := exec.Command("bash", "-c", commands.execution).CombinedOutput()
 	if errcmd != nil {
-		resultatvide := commandStruct{commands.titlecmd, "La commande " + commands.command + " n'existe pas"}
-		log.Print(resultatvide)
-		channelCommand <- resultatvide
+		emptyResult := pairCommand{commands.designation, "La commande " + commands.execution + " n'existe pas"}
+		log.Print(emptyResult)
+		returnExecutedCommand <- emptyResult
 	} else {
 		regexp, _ := regexp.Compile(`\n`)
-		if commands.titlecmd == "user" {
-			formatoutput := regexp.ReplaceAllString(string(output), "")
-			commands.command = formatoutput
+		if commands.designation == "user" {
+			htmlFormated := regexp.ReplaceAllString(string(output), "")
+			commands.execution = htmlFormated
 		} else {
-			formatoutput := regexp.ReplaceAllString(string(output), "<br>")
-			commands.command = formatoutput
+			htmlFormated := regexp.ReplaceAllString(string(output), "<br>")
+			commands.execution = htmlFormated
 		}
-		channelCommand <- commands
+		returnExecutedCommand <- commands
 	}
 }
 
-const htmltemplate = `
+const htmlTemplate = `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -119,16 +119,16 @@ const htmltemplate = `
       <section class="section">
         <div class="container">
           <div class="columns is-multiline">
-            {{ range $cmdtitle, $cmdexec := .Commands }}
+            {{ range $designation, $execution := .Commands }}
             <div class="column is-6-tablet is-3-desktop">
               <div class="card has-background-grey-lighter">
                 <div class="card-header">
                   <h3 class="card-header-title is-inline has-text-danger">
-                      <span>{{ $cmdtitle }}</span>
+                      <span>{{ $designation }}</span>
                   </h3>
                 </div>
                 <div class="card-content">
-                    <p>{{ $cmdexec }}</p>
+                    <p>{{ $execution }}</p>
                 </div>
               </div>
             </div>
