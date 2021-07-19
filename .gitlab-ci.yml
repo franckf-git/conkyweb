@@ -19,4 +19,4 @@ before_script:
 build:
   stage: build
   script:
-    - go build -o conkyweb
+    - go build -o conkyweb main.go
