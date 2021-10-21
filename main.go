@@ -55,6 +55,7 @@ func serveTemplate(response http.ResponseWriter, request *http.Request) {
 		getExecutedCommand := <-returnExecutedCommand
 		commandsProcessed[getExecutedCommand.designation] = getExecutedCommand.execution
 	}
+	close(returnExecutedCommand)
 
 	indexTemplate, err := template.New("").Parse(htmlTemplate)
 	if err != nil {
